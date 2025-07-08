@@ -1,5 +1,8 @@
 let commitSha: string | undefined;
 
+// Type definitions for release states
+type ReleaseState = 'not_started' | 'running' | 'success' | 'failed';
+
 // Global error handlers for Deno
 addEventListener("unhandledrejection", (event) => {
   console.error("Unhandled Rejection:", event.reason);
@@ -31,7 +34,7 @@ async function executeRelease() {
   console.log("Executing release...");
   
   // Read existing release log first
-  let log: Record<string, boolean> = {};
+  let log: Record<string, ReleaseState> = {};
   try {
     const text = await Deno.readTextFile("release-log.json");
     log = JSON.parse(text);
@@ -47,7 +50,12 @@ async function executeRelease() {
     return;
   }
   
-  let success: boolean;
+  // Mark as running
+  log[commitSha!] = "running";
+  await Deno.writeTextFile("release-log.json", JSON.stringify(log, null, 2));
+  console.log("Release marked as running...");
+  
+  let state: ReleaseState;
   try {
     const process = new Deno.Command("bash", {
       args: ["clone.sh"],
@@ -55,15 +63,15 @@ async function executeRelease() {
       stderr: "inherit",
     });
     const { code } = await process.output();
-    success = code === 0;
-    console.log("Release executed. Exit Code:", code);
+    state = code === 0 ? "success" : "failed";
+    console.log("Release executed. Exit Code:", code, "State:", state);
   } catch (err) {
     console.error("Error running clone.sh:", err);
-    success = false;
+    state = "failed";
   }
 
-  // Update release log with result
-  log[commitSha!] = success;
+  // Update release log with final result
+  log[commitSha!] = state;
   await Deno.writeTextFile("release-log.json", JSON.stringify(log, null, 2));
   console.log("Release log updated:", log);
 }
@@ -76,8 +84,8 @@ async function handleRequest(request: Request): Promise<Response> {
       case "/healthcheck":
         return new Response("OK", { status: 200 });
 
-      case "/isDeployed":
-        return await handleIsDeployed(url);
+      case "/releaseState":
+        return await handleReleaseState(url);
 
       default:
         return new Response("Not Found", { status: 404 });
@@ -88,7 +96,7 @@ async function handleRequest(request: Request): Promise<Response> {
   }
 }
 
-async function handleIsDeployed(url: URL): Promise<Response> {
+async function handleReleaseState(url: URL): Promise<Response> {
   const commitSha = url.searchParams.get("commit-sha");
 
   if (!commitSha) {
@@ -98,24 +106,25 @@ async function handleIsDeployed(url: URL): Promise<Response> {
   try {
     // Read and parse the release-log.json file
     const releaseLogContent = await Deno.readTextFile("release-log.json");
-    const releaseLog = JSON.parse(releaseLogContent);
+    const releaseLog: Record<string, ReleaseState> = JSON.parse(releaseLogContent);
 
     // Check if the commit SHA exists as a property
     if (commitSha in releaseLog) {
-      return new Response(JSON.stringify(releaseLog[commitSha]), {
+      const state = releaseLog[commitSha];
+      return new Response(JSON.stringify(state), {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });
     } else {
-      return new Response(JSON.stringify(false), {
+      return new Response(JSON.stringify("not_started" as ReleaseState), {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });
     }
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) {
-      // File doesn't exist, return false
-      return new Response(JSON.stringify(false), {
+      // File doesn't exist, return not_started
+      return new Response(JSON.stringify("not_started" as ReleaseState), {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });

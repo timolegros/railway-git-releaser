@@ -14,7 +14,17 @@ REPO_NAME=$(basename "$RELEASER_GIT_URL" .git)
 # Clone if repo doesn't exist
 if [ ! -d "$REPO_NAME" ]; then
     echo "Cloning $RELEASER_GIT_URL at commit $RELEASER_GIT_COMMIT_SHA..."
-    git clone --depth 1 --branch "$RELEASER_GIT_COMMIT_SHA" "$RELEASER_GIT_URL" "$REPO_NAME"
+    # Clone the repo first, then checkout the specific commit
+    git clone "$RELEASER_GIT_URL" "$REPO_NAME"
+    cd "$REPO_NAME"
+    git checkout "$RELEASER_GIT_COMMIT_SHA"
+    cd ..
+else
+    # If repo exists, just checkout the specific commit
+    cd "$REPO_NAME"
+    git fetch origin
+    git checkout "$RELEASER_GIT_COMMIT_SHA"
+    cd ..
 fi
 
 # Execute release command
