@@ -1,5 +1,16 @@
 let commitSha: string | undefined;
 
+// Global error handlers for Deno
+addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled Rejection:", event.reason);
+  Deno.exit(1);
+});
+
+addEventListener("error", (event) => {
+  console.error("Uncaught Error:", event.error);
+  Deno.exit(1);
+});
+
 export function main() {
   commitSha = Deno.env.get("RAILWAY_GIT_COMMIT_SHA");
   if (!commitSha) {
@@ -18,6 +29,24 @@ export function main() {
 
 async function executeRelease() {
   console.log("Executing release...");
+  
+  // Read existing release log first
+  let log: Record<string, boolean> = {};
+  try {
+    const text = await Deno.readTextFile("release-log.json");
+    log = JSON.parse(text);
+  } catch (err) {
+    if (!(err instanceof Deno.errors.NotFound)) {
+      throw new Error(`Error reading release-log.json: ${err}`);
+    }
+  }
+  
+  // Check if this commit has already been processed
+  if (commitSha! in log) {
+    console.log(`Release for commit ${commitSha} has already been executed. Result: ${log[commitSha!]}`);
+    return;
+  }
+  
   let success: boolean;
   try {
     const process = new Deno.Command("bash", {
@@ -33,16 +62,7 @@ async function executeRelease() {
     success = false;
   }
 
-  // Read or initialize release-log.json
-  let log: Record<string, boolean> = {};
-  try {
-    const text = await Deno.readTextFile("release-log.json");
-    log = JSON.parse(text);
-  } catch (err) {
-    if (!(err instanceof Deno.errors.NotFound)) {
-      console.error("Error reading release-log.json:", err);
-    }
-  }
+  // Update release log with result
   log[commitSha!] = success;
   await Deno.writeTextFile("release-log.json", JSON.stringify(log, null, 2));
   console.log("Release log updated:", log);
