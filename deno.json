@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "start": "RAILWAY_GIT_COMMIT_SHA=123 RELEASER_RELEASE_COMMAND=\"echo 'Blah Blah'\" deno run --allow-env --allow-net --allow-read --allow-write --allow-run main.ts",
+    "dev": "deno run --watch main.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}
