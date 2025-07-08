@@ -27,6 +27,10 @@ else
     cd ..
 fi
 
+# Make all .sh files executable in the repository
+echo "Making shell scripts executable..."
+find "$REPO_NAME" -name "*.sh" -type f -exec chmod +x {} \;
+
 # Execute release command
 cd "$REPO_NAME"
 eval "$RELEASER_RELEASE_COMMAND"
