@@ -4,5 +4,7 @@ CREATE TABLE IF NOT EXISTS release_log (
     git_commit_sha TEXT UNIQUE NOT NULL,
     release_status TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    started_at DATETIME,
+    ended_at DATETIME
 );
