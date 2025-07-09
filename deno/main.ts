@@ -22,9 +22,6 @@ export function main() {
 
   const port = 8000;
 
-  // Start release execution in parallel (fire-and-forget)
-  executeRelease();
-
   // Start HTTP server and keep process alive
   console.log(`HTTP server running on port ${port}`);
   Deno.serve({ port }, handleRequest);
