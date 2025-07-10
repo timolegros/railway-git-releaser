@@ -63,7 +63,6 @@ This service provides a centralized release management system with the following
 ### Database Schema
 The system uses two main tables:
 - **`release_log`**: Tracks all release attempts with status, timing, and metadata
-- **`release_queue`**: Manages pending releases
 
 ### Environment Variables
 - `RELEASER_GIT_URL`: Repository URL to clone

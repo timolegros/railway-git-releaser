@@ -1,13 +1,12 @@
 import {Request, Response} from "express";
 import Database from "better-sqlite3";
-import {getReleaseState} from "../database/utils";
 import { validateCommitSha } from "../utils/validation";
 import { ReleaseLogItem } from "../types";
 
-export function releaseState(db: Database.Database, req: Request, res: Response) {
+export function getRelease(db: Database.Database, req: Request, res: Response) {
   try {
-    const commitSha = req.query['commit-sha'] as string;
-
+    const {commitSha} = req.params;
+    console.log('>>>>>>>>>>>>>>>> commitSha', commitSha);
     try {
       validateCommitSha(commitSha);
     } catch (error: unknown) {
@@ -18,7 +17,7 @@ export function releaseState(db: Database.Database, req: Request, res: Response)
     const stmt = db.prepare(`
             SELECT *
             FROM release_log
-            WHERE git_commit_sha = ?
+            WHERE git_commit_sha = ?;
         `);
     const details = stmt.get(commitSha) as ReleaseLogItem | undefined;
 

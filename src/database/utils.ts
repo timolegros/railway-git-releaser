@@ -19,29 +19,6 @@ export function getReleaseState(
   }
 }
 
-export function insertReleaseLog(
-  db: Database.Database,
-  commitSha: string,
-  status: ReleaseState,
-  startTime?: Date
-): void {
-  try {
-    const stmt = db.prepare(`
-        INSERT INTO release_log (git_commit_url, git_commit_sha, release_status, started_at)
-        VALUES (?, ?, ?, ?)
-    `);
-    stmt.run(
-      `https://github.com/commit/${commitSha}`,
-      commitSha,
-      status,
-      startTime?.toISOString() || new Date().toISOString()
-    );
-  } catch (error) {
-    console.error(`Failed to insert release log for ${commitSha}:`, error);
-    throw error;
-  }
-}
-
 export function updateReleaseStatus({
   db,
   commitSha,
@@ -112,7 +89,7 @@ export function removeFromQueue(
 ): void {
   try {
     const stmt = db.prepare(
-      "DELETE FROM release_queue WHERE git_commit_sha = ?"
+      "DELETE FROM release_log WHERE git_commit_sha = ? AND release_status = 'queued'"
     );
     stmt.run(commitSha);
   } catch (error) {

@@ -16,7 +16,7 @@ export function cleanup(db: Database.Database, req: Request, res: Response) {
     console.log(`Cleaned up ${result.changes} old release records`);
 
     return res.status(200).json({
-      message: `Cleanup completed for releases older than ${days} days`,
+      message: `Cleanup completed for releases older than ${days} day(s)`,
     });
   } catch (error) {
     console.error("Error during manual cleanup:", error);
