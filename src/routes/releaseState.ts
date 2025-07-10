@@ -1,30 +1,28 @@
 import {Request, Response} from "express";
 import Database from "better-sqlite3";
 import {getReleaseState} from "../database/utils";
+import { validateCommitSha } from "../utils/validation";
+import { ReleaseLogItem } from "../types";
 
 export function releaseState(db: Database.Database, req: Request, res: Response) {
   try {
     const commitSha = req.query['commit-sha'] as string;
 
-    if (!commitSha) {
-      return res.status(400).json({error: 'Missing commit-sha parameter'});
+    try {
+      validateCommitSha(commitSha);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      return res.status(400).json({ error: errorMessage });
     }
 
-    const state = getReleaseState(db, commitSha);
-
-    // Get additional details if available
     const stmt = db.prepare(`
-            SELECT release_status, created_at, updated_at, started_at, ended_at
+            SELECT *
             FROM release_log
             WHERE git_commit_sha = ?
         `);
-    const details = stmt.get(commitSha) as any;
+    const details = stmt.get(commitSha) as ReleaseLogItem | undefined;
 
-    return res.status(200).json({
-      commitSha,
-      state,
-      details: details || null
-    });
+    return res.status(200).json(details ?? {});
   } catch (error) {
     console.error('Error handling releaseState request:', error);
     res.status(500).json({error: 'Internal Server Error'});

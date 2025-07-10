@@ -72,7 +72,7 @@ The system uses two main tables:
 - `DEFAULT_CLEANUP_DAYS`: Days to keep old records (default: 30)
 - `SQLITE_DB_PATH`: Database file path (default: database.sqlite)
 
-## How to use it
+## Getting Started
 
 ### 1. Setup the Service
 
@@ -152,8 +152,7 @@ Health check endpoint that returns the current status of the release service.
 {
   "status": "OK",
   "isReleaseRunning": false,
-  "queueLength": 2,
-  "isProcessingQueue": false
+  "queueLength": 2
 }
 ```
 
@@ -168,8 +167,7 @@ Queue a new release for a specific commit SHA.
 **Request Body:**
 ```json
 {
-  "commitSha": "abc1234",
-  "priority": 0
+  "commitSha": "abc1234"
 }
 ```
 
@@ -177,8 +175,7 @@ Queue a new release for a specific commit SHA.
 ```json
 {
   "message": "Release triggered for commit abc1234",
-  "state": "running",
-  "priority": 0
+  "state": "running"
 }
 ```
 
@@ -186,8 +183,7 @@ Queue a new release for a specific commit SHA.
 ```json
 {
   "message": "Release for commit abc1234 has been queued",
-  "state": "queued",
-  "priority": 0
+  "state": "queued"
 }
 ```
 
@@ -242,13 +238,11 @@ Get the current status of the release queue.
   "queue": [
     {
       "git_commit_sha": "abc1234",
-      "queued_at": "2024-01-01T12:00:00.000Z",
-      "priority": 1
+      "queued_at": "2024-01-01T12:00:00.000Z"
     },
     {
       "git_commit_sha": "def5678",
-      "queued_at": "2024-01-01T12:01:00.000Z",
-      "priority": 0
+      "queued_at": "2024-01-01T12:01:00.000Z"
     }
   ]
 }
@@ -393,7 +387,13 @@ Run tests with coverage:
 npm run test:coverage
 ```
 
-# TODO:
-- Finalize tests
-- Run tests + coverage in CI
-- Add badge in README
+# Roadmap
+1. Get to 90+ percent test coverage
+2. Add GitHub actions for tests/coverage
+3. Update README with badges + put setup template as the last step
+4. Publish v1 of the Docker image to GHCR
+5. Build and publish template on Railway
+6. Add support for private repositories for release scripts
+7. Support multiple service groups (groups of dependent services that need to deploy atomically)
+    - Adds support for multiple git repositories as sources for release scripts
+8. Add support for arbitrary runtimes (Deno, Bun, etc)

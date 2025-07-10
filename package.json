@@ -6,10 +6,10 @@
     "dev": "tsx watch src/main.ts",
     "start": "node build/main.js",
     "check-types": "tsc --noEmit -P tsconfig.test.json",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest watch"
+    "test": "NODE_ENV=test RELEASE_TIMEOUT_MS=1000 vitest",
+    "test:run": "NODE_ENV=test RELEASE_TIMEOUT_MS=1000 vitest run",
+    "test:coverage": "NODE_ENV=test RELEASE_TIMEOUT_MS=1000 vitest run --coverage",
+    "test:watch": "NODE_ENV=test RELEASE_TIMEOUT_MS=1000 vitest watch"
   },
   "author": "timolegros",
   "license": "Apache-2.0",

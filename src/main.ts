@@ -1,9 +1,11 @@
 import express from 'express';
 import {initializeDatabase} from './database/db';
 import { createRouter } from './routes/router';
-import { processStartupQueue } from './utils/processStartupQueue';
+import { processQueue } from './utils/processQueue';
+import { failRunningReleasesOnStartup } from './database/utils';
+import { QUEUE_INTERVAL_MS } from './config';
 
-export function main() {
+export function initApp(test: boolean = false) {
   const db = initializeDatabase();
 
   const port = 8000;
@@ -13,13 +15,24 @@ export function main() {
 
   app.use('/', createRouter(db));
 
-  app.listen(port, () => {
+  !test && app.listen(port, () => {
     console.log(`HTTP server running on port ${port}`);
   });
 
-  processStartupQueue(db);
+  failRunningReleasesOnStartup(db);
+  
+  // Process queue immediately on startup
+  processQueue(db);
+  
+  // Then process queue every 5 seconds
+  setInterval(() => {
+    processQueue(db);
+  }, QUEUE_INTERVAL_MS);
+
+  return { app, db };
 }
 
+if (require.main === module) {
   // Global error handlers for Node.js
   process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
@@ -42,6 +55,5 @@ export function main() {
     process.exit(0);
   });
 
-if (require.main === module) {
-  main();
+  initApp();
 }

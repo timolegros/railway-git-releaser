@@ -1,22 +1,45 @@
 import {spawn} from "child_process";
-import {RELEASE_TIMEOUT_MS} from "../config";
+import {NODE_ENV, RELEASE_TIMEOUT_MS, GRACEFUL_SHUTDOWN_MS} from "../config";
 import {ReleaseState} from "../types";
 import Database from "better-sqlite3";
-import {removeFromQueue, updateReleaseStatus} from "../database/utils";
-import {processNextQueuedRelease} from "./processNextQueuedRelease";
+import {updateReleaseStatus} from "../database/utils";
+import { getReleaseScriptFilePath } from "./getReleaseScriptFilePath";
 
-export let isProcessingQueue = false;
+export let isReleaseRunning = false;
+
+// Custom error for release timeouts
+export class ReleaseTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Release timed out after ${timeoutMs / 1000} seconds`);
+    this.name = 'ReleaseTimeoutError';
+  }
+}
 
 export async function executeReleaseForCommit(targetCommitSha: string, db: Database.Database) {
-  isProcessingQueue = true;
+  isReleaseRunning = true;
   const startTime = new Date();
+
+  const changes = updateReleaseStatus({
+    db,
+    commitSha: targetCommitSha,
+    status: "running",
+    startedAt: startTime,
+  });
+  if (changes === 0) {
+    console.warn(`No queued release found for commit ${targetCommitSha}. Release may have been cancelled.`);
+    return;
+  }
 
   console.log(`Executing release for commit ${targetCommitSha}...`);
 
+  const releaseScriptFilePath = getReleaseScriptFilePath();
+  NODE_ENV === 'test' && console.log(`Using release script file: ${releaseScriptFilePath}`);
+
   let state: ReleaseState;
+  let endedAt: Date;
   try {
     // Set the commit SHA environment variable for the clone script
-    const childProcess = spawn('bash', ['clone.sh'], {
+    const childProcess = spawn('bash', [releaseScriptFilePath], {
       stdio: 'inherit',
       env: {
         ...process.env,
@@ -38,39 +61,33 @@ export async function executeReleaseForCommit(targetCommitSha: string, db: Datab
             if (!childProcess.killed) {
               childProcess.kill('SIGKILL');
             }
-          }, 5000); // Give 5 seconds for graceful shutdown
-          reject(new Error(`Release timed out after ${RELEASE_TIMEOUT_MS / 1000} seconds`));
+          }, GRACEFUL_SHUTDOWN_MS); // Wait for graceful shutdown
+          reject(new ReleaseTimeoutError(RELEASE_TIMEOUT_MS));
         }, RELEASE_TIMEOUT_MS);
       })
     ]);
+    endedAt = new Date();
 
     state = code === 0 ? "success" : "failed";
     console.log(`Release for commit ${targetCommitSha} executed. Exit Code:`, code, "State:", state);
   } catch (err) {
-    console.error(`Error running clone.sh for commit ${targetCommitSha}:`, err);
-    state = "failed";
+    endedAt = new Date();
+    if (err instanceof ReleaseTimeoutError) {
+      console.error(`Release timed out for commit ${targetCommitSha}:`, err);
+      state = "timeout";
+    } else {
+      console.error(`Error running clone.sh for commit ${targetCommitSha}:`, err);
+      state = "failed";
+    }
   }
 
-  const endTime = new Date();
-
-  try {
-    // Update release log with final result
-    updateReleaseStatus(db, targetCommitSha, state, endTime);
-
-    // Remove from queue if it was there
-    removeFromQueue(db, targetCommitSha);
-
-    console.log(`Release log updated for commit ${targetCommitSha}:`, state);
-
-    // Log duration
-    const duration = endTime.getTime() - startTime.getTime();
-    console.log(`Release duration: ${Math.round(duration / 1000)} seconds`);
-  } catch (error) {
-    console.error(`Error updating release status for ${targetCommitSha}:`, error);
-  } finally {
-    isProcessingQueue = false;
-
-    // Process next queued release if any
-    processNextQueuedRelease(db);
-  }
+  updateReleaseStatus({
+    db,
+    commitSha: targetCommitSha,
+    status: state,
+    endedAt,
+  });
+  const duration = endedAt.getTime() - startTime.getTime();
+  console.log(`Release duration: ${Math.round(duration)} ms`);
+  isReleaseRunning = false;
 }
