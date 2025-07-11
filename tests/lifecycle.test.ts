@@ -675,17 +675,39 @@ describe("API Routes", () => {
         expect(release?.git_commit_sha).toBe(randomCommitSha);
       }
     );
+  });
 
+  describe('Chaos tests', () => {
     it("should set running releases to failed on app restart", async () => {
-      // TODO: Implement chaos test
-    });
-
-    it("should execute queued releases on app restart", async () => {
       // TODO: Implement chaos test
     });
 
     it("should not execute releases that are cancelled or running", async () => {
       // TODO: Implement chaos test
     });
-  });
+
+    describe('Test with disabled database', () => {
+      beforeAll(() => {
+        db.close();
+      });
+
+      describe('Routes', () => {
+        it('should return 500 if database is disabled', async () => {
+          const response = await request(app).get('/healthcheck');
+        })
+      });
+
+      describe('Release execution', () => {
+        it('should not execute releases if database is disabled', async () => {
+          filepathMock.mockReturnValue(
+            path.join(__dirname, "./utils/passing-release.sh")
+          );
+          const randomCommitSha = generateRandomGitHash();
+          const response = await request(app).post("/queue").send({
+            commitSha: randomCommitSha,
+          });
+        })
+      })
+    });
+  })
 });

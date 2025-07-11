@@ -4,3 +4,4 @@ release-log.json
 build/
 node_modules/
 database.sqlite
+coverage
