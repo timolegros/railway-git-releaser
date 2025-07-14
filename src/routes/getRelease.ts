@@ -6,7 +6,6 @@ import { ReleaseLogItem } from "../types";
 export function getRelease(db: Database.Database, req: Request, res: Response) {
   try {
     const {commitSha} = req.params;
-    console.log('>>>>>>>>>>>>>>>> commitSha', commitSha);
     try {
       validateCommitSha(commitSha);
     } catch (error: unknown) {
