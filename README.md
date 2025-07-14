@@ -1,5 +1,9 @@
 [![Coverage Status](https://coveralls.io/repos/github/timolegros/railway-git-releaser-template/badge.svg?branch=main)](https://coveralls.io/github/timolegros/railway-git-releaser-template?branch=main)
 
+[![CI Tests](https://github.com/timolegros/railway-git-releaser-template/actions/workflows/coverage.yml/badge.svg)](https://github.com/timolegros/railway-git-releaser-template/actions/workflows/coverage.yml)
+
+![GitHub repo size](https://img.shields.io/github/repo-size/timolegros/railway-git-releaser-template)
+
 ## Description
 
 This repository contains a **Railway Git Releaser** service that provides centralized release management for multi-service deployments. It enables you to implement Heroku-style release phases that ensure atomic deployments across multiple services.
