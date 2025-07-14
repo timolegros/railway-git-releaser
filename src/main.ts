@@ -3,7 +3,7 @@ import {initializeDatabase} from './database/db';
 import { createRouter } from './routes/router';
 import { processQueue } from './utils/processQueue';
 import { failRunningReleasesOnStartup } from './database/utils';
-import {PORT, QUEUE_INTERVAL_MS} from './config';
+import {PORT, QUEUE_INTERVAL_MS, NODE_ENV} from './config';
 
 export function initApp(test: boolean = false) {
   const db = initializeDatabase();
@@ -17,8 +17,8 @@ export function initApp(test: boolean = false) {
 
   let server;
   if (!test) {
-    // Bind to 0.0.0.0 for Railway
-    server = app.listen(PORT, '0.0.0.0', () => {
+    // Bind to :: (IPv6) for Railway private networking
+    server = app.listen(PORT, NODE_ENV === 'production' ? '::' : '0.0.0.0', () => {
       console.log(`HTTP server running on port ${port}`);
     });
   }
