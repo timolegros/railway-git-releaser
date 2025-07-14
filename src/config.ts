@@ -1,7 +1,12 @@
 import dotenv from "dotenv";
-dotenv.config();
+
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 export const NODE_ENV = process.env.NODE_ENV || "development";
+
+export const PORT = parseInt(process.env.PORT || "8000");
 
 export const SQLITE_DB_PATH = (() => {
   if (NODE_ENV === "test") return ":memory:";

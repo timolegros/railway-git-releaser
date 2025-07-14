@@ -3,33 +3,37 @@ import {initializeDatabase} from './database/db';
 import { createRouter } from './routes/router';
 import { processQueue } from './utils/processQueue';
 import { failRunningReleasesOnStartup } from './database/utils';
-import { QUEUE_INTERVAL_MS } from './config';
+import {PORT, QUEUE_INTERVAL_MS} from './config';
 
 export function initApp(test: boolean = false) {
   const db = initializeDatabase();
 
-  const port = 8000;
+  // Use Railway's PORT environment variable
+  const port = process.env.PORT || 8000;
   const app = express();
 
   app.use(express.json());
-
   app.use('/', createRouter(db));
 
-  !test && app.listen(port, () => {
-    console.log(`HTTP server running on port ${port}`);
-  });
+  let server;
+  if (!test) {
+    // Bind to 0.0.0.0 for Railway
+    server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`HTTP server running on port ${port}`);
+    });
+  }
 
   failRunningReleasesOnStartup(db);
-  
+
   // Process queue immediately on startup
   processQueue(db);
-  
+
   // Then process queue every 5 seconds
-  setInterval(() => {
+  const queueInterval = setInterval(() => {
     processQueue(db);
   }, QUEUE_INTERVAL_MS);
 
-  return { app, db };
+  return { app, db, server, queueInterval };
 }
 
 if (require.main === module) {
@@ -44,16 +48,34 @@ if (require.main === module) {
     process.exit(1);
   });
 
-  // Graceful shutdown handling
-  process.on('SIGTERM', () => {
-    console.log('Received SIGTERM, shutting down gracefully...');
-    process.exit(0);
-  });
+  const { server, queueInterval } = initApp();
 
-  process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down gracefully...');
-    process.exit(0);
-  });
+  // Improved graceful shutdown handling
+  function gracefulShutdown(signal: string) {
+    console.log(`Received ${signal}, shutting down gracefully...`);
 
-  initApp();
+    // Clear the queue interval
+    if (queueInterval) {
+      clearInterval(queueInterval);
+    }
+
+    // Close the server
+    if (server) {
+      server.close(() => {
+        console.log('HTTP server closed');
+        process.exit(0);
+      });
+
+      // Force close after 10 seconds
+      setTimeout(() => {
+        console.log('Forcing shutdown');
+        process.exit(1);
+      }, 10000);
+    } else {
+      process.exit(0);
+    }
+  }
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
