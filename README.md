@@ -390,8 +390,6 @@ npm run test:coverage
 
 # Roadmap
 1. Get to 90+ percent test coverage
-2. Add GitHub actions for tests/coverage
-3. Update README with badges + put setup template as the last step
 4. Publish v1 of the Docker image to GHCR
 5. Build and publish template on Railway
 6. Add support for private repositories for release scripts
