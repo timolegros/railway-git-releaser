@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/github/timolegros/railway-git-releaser-template/badge.svg?branch=main)](https://coveralls.io/github/timolegros/railway-git-releaser-template?branch=main) [![CI Tests](https://github.com/timolegros/railway-git-releaser-template/actions/workflows/coverage.yml/badge.svg)](https://github.com/timolegros/railway-git-releaser-template/actions/workflows/coverage.yml) ![GitHub repo size](https://img.shields.io/github/repo-size/timolegros/railway-git-releaser-template)
+[![Coverage Status](https://coveralls.io/repos/github/timolegros/railway-git-releaser/badge.svg?branch=main)](https://coveralls.io/github/timolegros/railway-git-releaser?branch=main) [![CI Tests](https://github.com/timolegros/railway-git-releaser/actions/workflows/coverage.yml/badge.svg)](https://github.com/timolegros/railway-git-releaser/actions/workflows/coverage.yml) ![GitHub repo size](https://img.shields.io/github/repo-size/timolegros/railway-git-releaser)
 
 ## Description
 

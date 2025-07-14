@@ -1,9 +1,15 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 export const NODE_ENV = process.env.NODE_ENV || "development";
 
-export const SQLITE_DB_PATH =
-  NODE_ENV === "test"
-    ? ":memory:"
-    : process.env.SQLITE_DB_PATH || "database.sqlite";
+export const SQLITE_DB_PATH = (() => {
+  if (NODE_ENV === "test") return ":memory:";
+  else if (process.env.SQLITE_DB_PATH) return process.env.SQLITE_DB_PATH;
+  // defaults to mounted volume in production
+  else if (NODE_ENV === 'production') return "/data/database.sqlite";
+  else return "database.sqlite";
+})();
 
 export const DEFAULT_CLEANUP_DAYS = process.env.DEFAULT_CLEANUP_DAYS
   ? parseInt(process.env.DEFAULT_CLEANUP_DAYS)
