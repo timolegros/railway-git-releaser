@@ -5,6 +5,10 @@ RUN apt-get update && apt-get install -y git bash && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+RUN git config --global --add safe.directory /app
+# Disable detached head warning when checking out specific commits in clone.sh
+RUN git config --global advice.detachedHead false
+
 # Copy package files first for better caching
 COPY package*.json ./
 
