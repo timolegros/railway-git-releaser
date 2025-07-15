@@ -19,7 +19,7 @@ export function createRouter(db: Database.Database) {
   router.get('/queue', queueStatus.bind(null, db));
 
   // Release
-  router.get('/release/:commitSha', getRelease.bind(null, db));
+  router.get('/release', getRelease.bind(null, db));
   router.get('/metrics', metrics.bind(null, db));
   router.post('/cleanup', cleanup.bind(null, db));
 

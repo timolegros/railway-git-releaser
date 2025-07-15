@@ -5,7 +5,10 @@ import { ReleaseLogItem } from "../types";
 
 export function getRelease(db: Database.Database, req: Request, res: Response) {
   try {
-    const {commitSha} = req.params;
+    const commitSha = req.query.commitSha as string | undefined;
+    if (!commitSha) {
+      return res.status(400).json({ error: 'Missing commitSha query parameter' });
+    }
     try {
       validateCommitSha(commitSha);
     } catch (error: unknown) {

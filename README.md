@@ -383,3 +383,4 @@ npm run test:coverage
 5. Support multiple service groups (groups of dependent services that need to deploy atomically)
     - Adds support for multiple git repositories as sources for release scripts
 6. Add support for arbitrary runtimes (Deno, Bun, etc)
+7. Move npm cache to volume
