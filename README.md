@@ -377,13 +377,14 @@ npm run test:coverage
 ```
 
 # Roadmap
-0. Updated README "Getting Started" instructions (env var, template link, TS scripts, check route definitions)
-1. Publish v1 of the Docker image to GHCR
-2. Build and publish template on Railway
-3. Get to 90+ percent test coverage
-4. Add support for private repositories for release scripts
+1. Updated README "Getting Started" instructions (env var, template link, TS scripts, check route definitions)
+2. Publish v1 of the Docker image to GHCR
+3. Build and publish template on Railway
+4. Allow re-running failed releases for the same commit
+5. Get to 90+ percent test coverage
+6. Add support for private repositories for release scripts
     - Must make the RELEASER_GIT_URL and RELEASER_RELEASE_COMMAND be provided when queuing releases
-5. Support multiple service groups (groups of dependent services that need to deploy atomically)
+7. Support multiple service groups (groups of dependent services that need to deploy atomically)
     - Adds support for multiple git repositories as sources for release scripts
-6. Add support for arbitrary runtimes (Deno, Bun, etc)
-7. Move npm cache to volume
+8. Add support for arbitrary runtimes (Deno, Bun, etc)
+9. Move npm cache to volume

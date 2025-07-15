@@ -27,7 +27,7 @@ export function queueRelease(
     if (releaseLog) {
       return res.status(202).json({
         message: `Release for commit ${commitSha} exists with status ${releaseLog.release_status}`,
-        state: releaseLog.release_status,
+        release: releaseLog,
       });
     }
 
