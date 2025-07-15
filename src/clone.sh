@@ -20,10 +20,10 @@ if [ ! -d "$REPO_NAME" ]; then
     git checkout "$RELEASER_GIT_COMMIT_SHA"
     cd ..
 else
-    # If repo exists, just checkout the specific commit
+    # If repo exists, force checkout the specific commit
     cd "$REPO_NAME"
     git fetch origin
-    git checkout "$RELEASER_GIT_COMMIT_SHA"
+    git checkout --force "$RELEASER_GIT_COMMIT_SHA"
     cd ..
 fi
 
@@ -33,4 +33,5 @@ find "$REPO_NAME" -name "*.sh" -type f -exec chmod +x {} \;
 
 # Execute release command
 cd "$REPO_NAME"
+echo "Executing release command: $RELEASER_RELEASE_COMMAND in $PWD"
 eval "$RELEASER_RELEASE_COMMAND" 2>&1
