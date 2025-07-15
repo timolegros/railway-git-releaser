@@ -341,21 +341,21 @@ describe("API Routes", () => {
     });
 
     it("should return empty object if a release is not found", async () => {
-      const response = await agent.get(`/release/${generateRandomGitHash()}`);
+      const response = await agent.get(`/release?commitSha=${generateRandomGitHash()}`);
       expect(response.status).toBe(200);
       expect(response.body).toEqual({});
     });
 
     it('should return 400 for invalid commit SHA', async () => {
-      const response = await agent.get(`/release/invalid`);
+      const response = await agent.get(`/release?commitSha=invalid`);
       expect(response.status).toBe(400);
       expect(response.body.error).toBe(`Invalid commit SHA format`);
     });
 
-    it("should return 404 if a commit SHA is not provided", async () => {
+    it("should return 400 if a commit SHA is not provided", async () => {
       const response = await agent.get(`/release`);
-      expect(response.status).toBe(404);
-      expect(response.body.error).toBe(`Not found`);
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe(`Missing commitSha query parameter`);
     });
 
     it("should return a release", async () => {
@@ -367,7 +367,7 @@ describe("API Routes", () => {
         startedAt: new Date(),
         endedAt: new Date(),
       });
-      const response = await agent.get(`/release/${randomCommitSha}`);
+      const response = await agent.get(`/release?commitSha=${randomCommitSha}`);
       expect(response.status).toBe(200);
       expect(response.body.release_status).toBe("success");
       expect(response.body.started_at).toBeDefined();
