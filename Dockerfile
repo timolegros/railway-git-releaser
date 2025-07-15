@@ -3,9 +3,6 @@ FROM node:22-slim
 # Install git and bash (needed for clone.sh)
 RUN apt-get update && apt-get install -y git bash && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm and yarn
-RUN npm install -g pnpm yarn
-
 WORKDIR /app
 
 RUN git config --global --add safe.directory /app
