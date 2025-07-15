@@ -3,7 +3,7 @@ import { initializeDatabase } from "./database/db";
 import { createRouter } from "./routes/router";
 import { processQueue } from "./utils/processQueue";
 import { failRunningReleasesOnStartup } from "./database/utils";
-import { PORT, QUEUE_INTERVAL_MS, NODE_ENV, API_KEY } from "./config";
+import { PORT, QUEUE_INTERVAL_MS, API_KEY } from "./config";
 
 export function initApp(test: boolean = false) {
   const db = initializeDatabase();

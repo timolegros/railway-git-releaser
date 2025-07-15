@@ -33,4 +33,4 @@ find "$REPO_NAME" -name "*.sh" -type f -exec chmod +x {} \;
 
 # Execute release command
 cd "$REPO_NAME"
-eval "$RELEASER_RELEASE_COMMAND" 
+eval "$RELEASER_RELEASE_COMMAND" 2>&1

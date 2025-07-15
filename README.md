@@ -62,16 +62,17 @@ This service provides a centralized release management system with the following
 5. **State tracking**: Release status is tracked throughout the process
 6. **Cleanup**: Queue is processed and next release is triggered automatically
 
-### Database Schema
-The system uses two main tables:
-- **`release_log`**: Tracks all release attempts with status, timing, and metadata
-
 ### Environment Variables
+- `NODE_ENV`: Defines default values for other environment variables
+- `PORT`: The port the ExpressJS server should bind to
 - `RELEASER_GIT_URL`: Repository URL to clone
 - `RELEASER_RELEASE_COMMAND`: Command to execute inside the cloned repository
 - `RELEASE_TIMEOUT_MS`: Maximum execution time (default: 30 minutes)
 - `DEFAULT_CLEANUP_DAYS`: Days to keep old records (default: 30)
 - `SQLITE_DB_PATH`: Database file path (default: database.sqlite)
+- `QUEUE_INTERVAL_MS`: The number of milliseconds between each poll of the database to check for queued releases (default: 5000)
+- `GRACEFUL_SHUTDOWN_MS`: The number of milliseconds to wait before forcefully killing a release
+- `API_KEY`: The api key to use for authentication
 
 ## Getting Started
 
@@ -376,6 +377,7 @@ npm run test:coverage
 ```
 
 # Roadmap
+0. Updated README "Getting Started" instructions (env var, template link, TS scripts, check route definitions)
 1. Publish v1 of the Docker image to GHCR
 2. Build and publish template on Railway
 3. Get to 90+ percent test coverage
