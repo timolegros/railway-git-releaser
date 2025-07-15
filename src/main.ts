@@ -3,24 +3,39 @@ import { initializeDatabase } from "./database/db";
 import { createRouter } from "./routes/router";
 import { processQueue } from "./utils/processQueue";
 import { failRunningReleasesOnStartup } from "./database/utils";
-import { PORT, QUEUE_INTERVAL_MS, NODE_ENV } from "./config";
+import { PORT, QUEUE_INTERVAL_MS, NODE_ENV, API_KEY } from "./config";
 
 export function initApp(test: boolean = false) {
   const db = initializeDatabase();
 
   // Use Railway's PORT environment variable
-  const host = NODE_ENV === "production" ? "::" : "0.0.0.0";
   const port = PORT || 8080;
   const app = express();
 
   app.use(express.json());
+  
+  // API key middleware (exclude /healthcheck)
+  app.use((req, res, next) => {
+    if (req.path === "/healthcheck") {
+      return next();
+    }
+    if (!API_KEY) {
+      return res.status(401).json({ error: "Unauthorized: API key not set in environment variables" });
+    }
+    const apiKey = req.header("x-api-key");
+    if (!apiKey || apiKey !== API_KEY) {
+      return res.status(401).json({ error: "Unauthorized: Invalid or missing API key" });
+    }
+    next();
+  });
+
   app.use("/", createRouter(db));
 
   let server;
   if (!test) {
     // Bind to :: (IPv6) for Railway private networking
-    server = app.listen(PORT, host, () => {
-      console.log(`HTTP server running on ${host} port ${port}`);
+    server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`HTTP server running on 0.0.0.0:${port}`);
     });
   }
 

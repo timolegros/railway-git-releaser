@@ -11,7 +11,7 @@ import {cancelRelease} from './cancelRelease';
 export function createRouter(db: Database.Database) {
   const router = Router();
 
-  router.get('/healthcheck', healthcheck.bind(null, db));
+  router.get('/healthcheck', healthcheck);
 
   // Queue
   router.post('/queue', queueRelease.bind(null, db));

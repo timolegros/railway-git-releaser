@@ -10,7 +10,7 @@ import {
 } from "vitest";
 import * as getReleaseScriptFilePath from "../src/utils/getReleaseScriptFilePath";
 import * as executeReleaseForCommit from "../src/utils/executeRelease";
-import request from "supertest";
+import request, { Agent } from "supertest";
 import express from "express";
 import Database from "better-sqlite3";
 import path from "path";
@@ -68,6 +68,7 @@ const commitSha = "6765f2fd3380e0c2e24c5255d96250df8d0b713d";
 
 describe("API Routes", () => {
   let app: express.Application;
+  let agent: Agent;
   const randomCommitSha = generateRandomGitHash();
   const randomCommitSha2 = generateRandomGitHash();
   const randomCommitSha3 = generateRandomGitHash();
@@ -77,6 +78,7 @@ describe("API Routes", () => {
     const { app: testApp, db: testDb } = initApp(true);
     app = testApp;
     db = testDb;
+    agent = request.agent(app).set('x-api-key', 'test');
     expect(executeReleaseMock).not.toHaveBeenCalled();
     expect(isReleaseRunning).toBe(false);
   });
@@ -94,23 +96,21 @@ describe("API Routes", () => {
 
   describe("GET /healthcheck", () => {
     it("should return 200 OK", async () => {
-      const response = await request(app).get("/healthcheck");
+      const response = await agent.get("/healthcheck");
       expect(response.status).toBe(200);
-      expect(response.body.status).toBe("OK");
-      expect(response.body.isReleaseRunning).toBe(false);
-      expect(response.body.queueLength).toBe(0);
+      expect(response.body).toEqual({});
     });
   });
 
   describe("Queue Lifecycle", () => {
     describe("POST /queue", () => {
       it("should fail if the commit SHA is invalid", async () => {
-        let response = await request(app).post("/queue").send({
+        let response = await agent.post("/queue").send({
           commitSha: "invalid",
         });
         expect(response.status).toBe(400);
         expect(response.body.error).toBe("Invalid commit SHA format");
-        response = await request(app).post("/queue").send({});
+        response = await agent.post("/queue").send({});
         expect(response.status).toBe(400);
         expect(response.body.error).toBe("Commit SHA is required");
       });
@@ -125,7 +125,7 @@ describe("API Routes", () => {
       // });
 
       it("should queue a release", async () => {
-        const response = await request(app).post("/queue").send({
+        const response = await agent.post("/queue").send({
           commitSha: randomCommitSha,
         });
         expect(response.status).toBe(200);
@@ -136,7 +136,7 @@ describe("API Routes", () => {
       });
 
       it("should fail to queue the same release more than once", async () => {
-        const response = await request(app).post("/queue").send({
+        const response = await agent.post("/queue").send({
           commitSha: randomCommitSha,
         });
         expect(response.status).toBe(202);
@@ -150,7 +150,7 @@ describe("API Routes", () => {
         filepathMock.mockReturnValue(
           path.join(__dirname, "./utils/passing-release.sh")
         );
-        const response = await request(app).post("/queue").send({
+        const response = await agent.post("/queue").send({
           commitSha: randomCommitSha2,
         });
         expect(response.status).toBe(200);
@@ -159,7 +159,7 @@ describe("API Routes", () => {
         );
         expect(response.body.state).toBe("queued");
 
-        const response2 = await request(app).post("/queue").send({
+        const response2 = await agent.post("/queue").send({
           commitSha: randomCommitSha3,
         });
         expect(response2.status).toBe(200);
@@ -168,7 +168,7 @@ describe("API Routes", () => {
         );
         expect(response2.body.state).toBe("queued");
 
-        const response3 = await request(app).post("/queue").send({
+        const response3 = await agent.post("/queue").send({
           commitSha: randomCommitSha3,
         });
         expect(response3.status).toBe(202);
@@ -185,7 +185,7 @@ describe("API Routes", () => {
           status: "running",
           startedAt: new Date(),
         });
-        const response = await request(app).post("/queue").send({
+        const response = await agent.post("/queue").send({
           commitSha: randomCommitSha,
         });
         expect(response.status).toBe(202);
@@ -200,7 +200,7 @@ describe("API Routes", () => {
           status: "failed",
           startedAt: new Date(),
         });
-        const response2 = await request(app).post("/queue").send({
+        const response2 = await agent.post("/queue").send({
           commitSha: randomCommitSha,
         });
         expect(response2.status).toBe(202);
@@ -215,7 +215,7 @@ describe("API Routes", () => {
           status: "success",
           startedAt: new Date(),
         });
-        const response3 = await request(app).post("/queue").send({
+        const response3 = await agent.post("/queue").send({
           commitSha: randomCommitSha,
         });
         expect(response3.status).toBe(202);
@@ -230,7 +230,7 @@ describe("API Routes", () => {
           status: "timeout",
           startedAt: new Date(),
         });
-        const response4 = await request(app).post("/queue").send({
+        const response4 = await agent.post("/queue").send({
           commitSha: randomCommitSha,
         });
         expect(response4.status).toBe(202);
@@ -243,7 +243,7 @@ describe("API Routes", () => {
 
     describe("GET /queue", () => {
       it("should return queue status", async () => {
-        const response = await request(app).get("/queue");
+        const response = await agent.get("/queue");
         expect(response.status).toBe(200);
         // randomCommitSha is not in the queue because state was updated in previous test
         expect(response.body.queueLength).toBe(2);
@@ -257,7 +257,7 @@ describe("API Routes", () => {
     describe("DELETE /queue/:commitSha", () => {
       it("should return 404 for non-existent commit", async () => {
         const nonExistentCommitSha = generateRandomGitHash();
-        const response = await request(app).delete(
+        const response = await agent.delete(
           `/queue/${nonExistentCommitSha}`
         );
         expect(response.status).toBe(404);
@@ -267,7 +267,7 @@ describe("API Routes", () => {
       });
 
       it("should return 404 if a commit SHA is not provided", async () => {
-        const response = await request(app).delete(`/queue/`);
+        const response = await agent.delete(`/queue/`);
         expect(response.status).toBe(404);
         expect(response.body.error).toBe("Not found");
       });
@@ -279,7 +279,7 @@ describe("API Routes", () => {
           status: "running",
           startedAt: new Date(),
         });
-        let response = await request(app).delete(`/queue/${randomCommitSha}`);
+        let response = await agent.delete(`/queue/${randomCommitSha}`);
         expect(response.status).toBe(409);
         expect(response.body.error).toBe(
           `Can only cancel queued releases`
@@ -291,7 +291,7 @@ describe("API Routes", () => {
           status: "failed",
           startedAt: new Date(),
         });
-        response = await request(app).delete(`/queue/${randomCommitSha}`);
+        response = await agent.delete(`/queue/${randomCommitSha}`);
         expect(response.status).toBe(409);
         expect(response.body.error).toBe(
           `Can only cancel queued releases`
@@ -303,7 +303,7 @@ describe("API Routes", () => {
           status: "success",
           startedAt: new Date(),
         });
-        response = await request(app).delete(`/queue/${randomCommitSha}`);
+        response = await agent.delete(`/queue/${randomCommitSha}`);
         expect(response.status).toBe(409);
         expect(response.body.error).toBe(
           `Can only cancel queued releases`
@@ -315,7 +315,7 @@ describe("API Routes", () => {
           status: "timeout",
           startedAt: new Date(),
         });
-        response = await request(app).delete(`/queue/${randomCommitSha}`);
+        response = await agent.delete(`/queue/${randomCommitSha}`);
         expect(response.status).toBe(409);
         expect(response.body.error).toBe(
           `Can only cancel queued releases`
@@ -323,7 +323,7 @@ describe("API Routes", () => {
       });
 
       it("should cancel a queued release", async () => {
-        const response = await request(app).delete(`/queue/${randomCommitSha2}`);
+        const response = await agent.delete(`/queue/${randomCommitSha2}`);
         expect(response.status).toBe(200);
         expect(response.body.message).toBe(
           `Release for commit ${randomCommitSha2} removed from queue`
@@ -341,19 +341,19 @@ describe("API Routes", () => {
     });
 
     it("should return empty object if a release is not found", async () => {
-      const response = await request(app).get(`/release/${generateRandomGitHash()}`);
+      const response = await agent.get(`/release/${generateRandomGitHash()}`);
       expect(response.status).toBe(200);
       expect(response.body).toEqual({});
     });
 
     it('should return 400 for invalid commit SHA', async () => {
-      const response = await request(app).get(`/release/invalid`);
+      const response = await agent.get(`/release/invalid`);
       expect(response.status).toBe(400);
       expect(response.body.error).toBe(`Invalid commit SHA format`);
     });
 
     it("should return 404 if a commit SHA is not provided", async () => {
-      const response = await request(app).get(`/release`);
+      const response = await agent.get(`/release`);
       expect(response.status).toBe(404);
       expect(response.body.error).toBe(`Not found`);
     });
@@ -367,7 +367,7 @@ describe("API Routes", () => {
         startedAt: new Date(),
         endedAt: new Date(),
       });
-      const response = await request(app).get(`/release/${randomCommitSha}`);
+      const response = await agent.get(`/release/${randomCommitSha}`);
       expect(response.status).toBe(200);
       expect(response.body.release_status).toBe("success");
       expect(response.body.started_at).toBeDefined();
@@ -442,14 +442,14 @@ describe("API Routes", () => {
     });
 
     it('should return 400 if days is not a number', async () => {
-      const response = await request(app).get(`/metrics?days=invalid`);
+      const response = await agent.get(`/metrics?days=invalid`);
       expect(response.status).toBe(400);
       expect(response.body.error).toBe(`days parameter is required`);
     });
 
     it("should return metrics", async () => {
       const days = '1'
-      const response = await request(app).get(`/metrics?days=${days}`);
+      const response = await agent.get(`/metrics?days=${days}`);
       expect(response.status).toBe(200);
       expect(response.body.metrics).toBeDefined();
       expect(response.body.period).toBe(`${days} days`);
@@ -509,7 +509,7 @@ describe("API Routes", () => {
 
     it("should cleanup old releases", async () => {
       const days = '1'
-      const response = await request(app).post("/cleanup").send({ days });
+      const response = await agent.post("/cleanup").send({ days });
       expect(response.status).toBe(200);
       expect(response.body.message).toBe(`Cleanup completed for releases older than ${days} day(s)`);
 
@@ -538,7 +538,7 @@ describe("API Routes", () => {
         path.join(__dirname, "./utils/passing-release.sh")
       );
       const randomCommitSha = generateRandomGitHash();
-      const response = await request(app).post("/queue").send({
+      const response = await agent.post("/queue").send({
         commitSha: randomCommitSha,
       });
       expect(response.status).toBe(200);
@@ -573,7 +573,7 @@ describe("API Routes", () => {
         path.join(__dirname, "./utils/passing-release.sh")
       );
       const randomCommitSha = generateRandomGitHash();
-      const response = await request(app).post("/queue").send({
+      const response = await agent.post("/queue").send({
         commitSha: randomCommitSha,
       });
       expect(response.status).toBe(200);
@@ -583,7 +583,7 @@ describe("API Routes", () => {
       expect(response.body.state).toBe("queued");
 
       const randomCommitSha2 = generateRandomGitHash();
-      const response2 = await request(app).post("/queue").send({
+      const response2 = await agent.post("/queue").send({
         commitSha: randomCommitSha2,
       });
       expect(response2.status).toBe(200);
@@ -592,7 +592,7 @@ describe("API Routes", () => {
       );
       expect(response2.body.state).toBe("queued");
 
-      const response3 = await request(app).post("/queue").send({
+      const response3 = await agent.post("/queue").send({
         commitSha: randomCommitSha2,
       });
       expect(response3.status).toBe(202);
@@ -621,7 +621,7 @@ describe("API Routes", () => {
         path.join(__dirname, "./utils/failing-release.sh")
       );
       const randomCommitSha = generateRandomGitHash();
-      const response = await request(app).post("/queue").send({
+      const response = await agent.post("/queue").send({
         commitSha: randomCommitSha,
       });
       expect(response.status).toBe(200);
@@ -650,7 +650,7 @@ describe("API Routes", () => {
           path.join(__dirname, "./utils/slow-release.sh")
         );
         const randomCommitSha = generateRandomGitHash();
-        const response = await request(app).post("/queue").send({
+        const response = await agent.post("/queue").send({
           commitSha: randomCommitSha,
         });
         expect(response.status).toBe(200);
@@ -693,7 +693,7 @@ describe("API Routes", () => {
 
       describe('Routes', () => {
         it('should return 500 if database is disabled', async () => {
-          const response = await request(app).get('/healthcheck');
+          const response = await agent.get('/healthcheck');
         })
       });
 
@@ -703,7 +703,7 @@ describe("API Routes", () => {
             path.join(__dirname, "./utils/passing-release.sh")
           );
           const randomCommitSha = generateRandomGitHash();
-          const response = await request(app).post("/queue").send({
+          const response = await agent.post("/queue").send({
             commitSha: randomCommitSha,
           });
         })

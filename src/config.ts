@@ -34,3 +34,9 @@ export const GRACEFUL_SHUTDOWN_MS =
     : process.env.GRACEFUL_SHUTDOWN_MS
     ? parseInt(process.env.GRACEFUL_SHUTDOWN_MS)
     : 5 * 1000; // 5 seconds
+
+export const API_KEY = (() => {
+  if (NODE_ENV === "test") return "test";
+  else if (process.env.API_KEY) return process.env.API_KEY;
+  else return undefined;
+})();

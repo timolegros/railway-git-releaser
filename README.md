@@ -146,19 +146,16 @@ Set the `preDeployCommand` for all services that depend on the atomic release to
 The service exposes the following REST API endpoints:
 
 #### `GET /healthcheck`
-Health check endpoint that returns the current status of the release service.
+Health check endpoint that returns a 200 OK status if the service is running. No JSON body is returned.
 
 **Response:**
-```json
-{
-  "status": "OK",
-  "isReleaseRunning": false,
-  "queueLength": 2
-}
+```
+Status: 200 OK
+(No body)
 ```
 
 **Error Codes:**
-- `500` - Database error
+- `500` - Internal server error
 
 ---
 
@@ -333,28 +330,18 @@ Manually trigger cleanup of old release records.
 
 ---
 
-## Why is this needed
 
-Railway doesn't have a native way of releasing multiple services that depend upon the same release steps.
-While Railway supports preDeployCommands and service dependencies, neither of these allow you to create
-'all or nothing' deployments that depend on a unified release flow.
 
-### Key Benefits
+## Security
 
-- **Atomic deployments**: Ensure all services deploy together or not at all
-- **Centralized release logic**: Single source of truth for release processes
-- **Queue management**: Handle multiple deployment requests efficiently
-- **Failure isolation**: Prevent partial deployments when release steps fail
-- **Monitoring**: Track release success rates and performance metrics
-- **Recovery**: Automatic cleanup and recovery from service crashes
+**Important:** The Railway Git Releaser API is publicly exposed (though not accessible) by default. This is because Railway pre-deploy steps do not have access to private networks, so the API must be reachable from the public internet for release coordination to work.
 
-### Use Cases
+### Recommendations
+- **API key protection:** The service requires API key authentication for all routes except `/healthcheck`. Set the `API_KEY` environment variable on all services that need to interact with the releaser.
+- **Restrict access:** If you are using an API gateway (such as NGINX), it is highly recommended to configure a whitelist of IPs that can access the releaser service. This typically requires enabling static outbound IPs on Railway for the services that will make API calls to the releaser.
+- **Minimal healthcheck exposure:** The `/healthcheck` route is intentionally minimal and does not return any sensitive data—only a 200 OK status code.
 
-- **Database migrations**: Ensure all services wait for migrations to complete
-- **Asset compilation**: Build and deploy assets before service deployment
-- **Configuration updates**: Update shared configuration across all services
-- **Testing**: Run integration tests before deploying any service
-- **Multi-service coordination**: Coordinate complex deployment workflows
+**Note:** The API is public by design to support Railway's deployment model. Take appropriate steps to secure your deployment in production environments.
 
 ## Development
 
@@ -389,10 +376,10 @@ npm run test:coverage
 ```
 
 # Roadmap
-1. Get to 90+ percent test coverage
-4. Publish v1 of the Docker image to GHCR
-5. Build and publish template on Railway
-6. Add support for private repositories for release scripts
-7. Support multiple service groups (groups of dependent services that need to deploy atomically)
+1. Publish v1 of the Docker image to GHCR
+2. Build and publish template on Railway
+3. Get to 90+ percent test coverage
+4. Add support for private repositories for release scripts
+5. Support multiple service groups (groups of dependent services that need to deploy atomically)
     - Adds support for multiple git repositories as sources for release scripts
-8. Add support for arbitrary runtimes (Deno, Bun, etc)
+6. Add support for arbitrary runtimes (Deno, Bun, etc)
