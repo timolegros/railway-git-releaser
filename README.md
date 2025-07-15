@@ -382,6 +382,7 @@ npm run test:coverage
 2. Build and publish template on Railway
 3. Get to 90+ percent test coverage
 4. Add support for private repositories for release scripts
+    - Must make the RELEASER_GIT_URL and RELEASER_RELEASE_COMMAND be provided when queuing releases
 5. Support multiple service groups (groups of dependent services that need to deploy atomically)
     - Adds support for multiple git repositories as sources for release scripts
 6. Add support for arbitrary runtimes (Deno, Bun, etc)
