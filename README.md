@@ -255,7 +255,7 @@ Get the current status of the release queue.
 Get the release state for a specific commit SHA.
 
 **Query Parameters:**
-- `commit-sha` (required) - The commit SHA to check
+- `commitSha` (required) - The commit SHA to check
 
 **Response:**
 ```json
