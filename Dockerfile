@@ -27,6 +27,6 @@ RUN chmod +x build/clone.sh
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD ["npm", "start"]

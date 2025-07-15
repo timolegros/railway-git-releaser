@@ -1,25 +1,26 @@
-import express from 'express';
-import {initializeDatabase} from './database/db';
-import { createRouter } from './routes/router';
-import { processQueue } from './utils/processQueue';
-import { failRunningReleasesOnStartup } from './database/utils';
-import {PORT, QUEUE_INTERVAL_MS, NODE_ENV} from './config';
+import express from "express";
+import { initializeDatabase } from "./database/db";
+import { createRouter } from "./routes/router";
+import { processQueue } from "./utils/processQueue";
+import { failRunningReleasesOnStartup } from "./database/utils";
+import { PORT, QUEUE_INTERVAL_MS, NODE_ENV } from "./config";
 
 export function initApp(test: boolean = false) {
   const db = initializeDatabase();
 
   // Use Railway's PORT environment variable
-  const port = process.env.PORT || 8000;
+  const host = NODE_ENV === "production" ? "::" : "0.0.0.0";
+  const port = PORT || 8080;
   const app = express();
 
   app.use(express.json());
-  app.use('/', createRouter(db));
+  app.use("/", createRouter(db));
 
   let server;
   if (!test) {
     // Bind to :: (IPv6) for Railway private networking
-    server = app.listen(PORT, NODE_ENV === 'production' ? '::' : '0.0.0.0', () => {
-      console.log(`HTTP server running on port ${port}`);
+    server = app.listen(PORT, host, () => {
+      console.log(`HTTP server running on ${host} port ${port}`);
     });
   }
 
@@ -38,13 +39,13 @@ export function initApp(test: boolean = false) {
 
 if (require.main === module) {
   // Global error handlers for Node.js
-  process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.on("unhandledRejection", (reason: any, promise: Promise<any>) => {
+    console.error("Unhandled Rejection at:", promise, "reason:", reason);
     process.exit(1);
   });
 
-  process.on('uncaughtException', (error: Error) => {
-    console.error('Uncaught Exception:', error);
+  process.on("uncaughtException", (error: Error) => {
+    console.error("Uncaught Exception:", error);
     process.exit(1);
   });
 
@@ -62,13 +63,13 @@ if (require.main === module) {
     // Close the server
     if (server) {
       server.close(() => {
-        console.log('HTTP server closed');
+        console.log("HTTP server closed");
         process.exit(0);
       });
 
       // Force close after 10 seconds
       setTimeout(() => {
-        console.log('Forcing shutdown');
+        console.log("Forcing shutdown");
         process.exit(1);
       }, 10000);
     } else {
@@ -76,6 +77,6 @@ if (require.main === module) {
     }
   }
 
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 }
