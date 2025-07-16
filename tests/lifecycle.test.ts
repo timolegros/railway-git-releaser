@@ -132,7 +132,7 @@ describe("API Routes", () => {
         expect(response.body.message).toBe(
           `Release queued for commit ${randomCommitSha}`
         );
-        expect(response.body.state).toBe("queued");
+        expect(response.body.release.release_status).toBe("queued");
       });
 
       it("should fail to queue the same release more than once", async () => {
@@ -143,7 +143,7 @@ describe("API Routes", () => {
         expect(response.body.message).toBe(
           `Release for commit ${randomCommitSha} exists with status queued`
         );
-        expect(response.body.state).toBe("queued");
+        expect(response.body.release.release_status).toBe("queued");
       });
 
       it("should queue multiple releases", async () => {
@@ -157,7 +157,7 @@ describe("API Routes", () => {
         expect(response.body.message).toBe(
           `Release queued for commit ${randomCommitSha2}`
         );
-        expect(response.body.state).toBe("queued");
+        expect(response.body.release.release_status).toBe("queued");
 
         const response2 = await agent.post("/queue").send({
           commitSha: randomCommitSha3,
@@ -166,7 +166,7 @@ describe("API Routes", () => {
         expect(response2.body.message).toBe(
           `Release queued for commit ${randomCommitSha3}`
         );
-        expect(response2.body.state).toBe("queued");
+        expect(response2.body.release.release_status).toBe("queued");
 
         const response3 = await agent.post("/queue").send({
           commitSha: randomCommitSha3,
@@ -175,7 +175,7 @@ describe("API Routes", () => {
         expect(response3.body.message).toBe(
           `Release for commit ${randomCommitSha3} exists with status queued`
         );
-        expect(response3.body.state).toBe("queued");
+        expect(response3.body.release.release_status).toBe("queued");
       });
 
       it('should return 202 when queueing a release that is already running, failed, success, or timeout', async () => {
@@ -192,7 +192,7 @@ describe("API Routes", () => {
         expect(response.body.message).toBe(
           `Release for commit ${randomCommitSha} exists with status running`
         );
-        expect(response.body.state).toBe("running");
+        expect(response.body.release.release_status).toBe("running");
 
         updateReleaseStatus({
           db,
@@ -207,7 +207,7 @@ describe("API Routes", () => {
         expect(response2.body.message).toBe(
           `Release for commit ${randomCommitSha} exists with status failed`
         );
-        expect(response2.body.state).toBe("failed");
+        expect(response2.body.release.release_status).toBe("failed");
 
         updateReleaseStatus({
           db,
@@ -222,7 +222,7 @@ describe("API Routes", () => {
         expect(response3.body.message).toBe(
           `Release for commit ${randomCommitSha} exists with status success`
         );
-        expect(response3.body.state).toBe("success");
+        expect(response3.body.release.release_status).toBe("success");
 
         updateReleaseStatus({
           db,
@@ -237,7 +237,7 @@ describe("API Routes", () => {
         expect(response4.body.message).toBe(
           `Release for commit ${randomCommitSha} exists with status timeout`
         );
-        expect(response4.body.state).toBe("timeout");
+        expect(response4.body.release.release_status).toBe("timeout");
       });
     });
 
@@ -545,7 +545,7 @@ describe("API Routes", () => {
       expect(response.body.message).toBe(
         `Release queued for commit ${randomCommitSha}`
       );
-      expect(response.body.state).toBe("queued");
+      expect(response.body.release.release_status).toBe("queued");
       vi.advanceTimersByTime(QUEUE_INTERVAL_MS);
       await awaitSpyResult(executeReleaseMock, 0);
       expect(executeReleaseMock).toHaveBeenCalledWith(randomCommitSha, db);
@@ -580,7 +580,7 @@ describe("API Routes", () => {
       expect(response.body.message).toBe(
         `Release queued for commit ${randomCommitSha}`
       );
-      expect(response.body.state).toBe("queued");
+      expect(response.body.release.release_status).toBe("queued");
 
       const randomCommitSha2 = generateRandomGitHash();
       const response2 = await agent.post("/queue").send({
@@ -590,7 +590,7 @@ describe("API Routes", () => {
       expect(response2.body.message).toBe(
         `Release queued for commit ${randomCommitSha2}`
       );
-      expect(response2.body.state).toBe("queued");
+      expect(response2.body.release.release_status).toBe("queued");
 
       const response3 = await agent.post("/queue").send({
         commitSha: randomCommitSha2,
@@ -599,7 +599,7 @@ describe("API Routes", () => {
       expect(response3.body.message).toBe(
         `Release for commit ${randomCommitSha2} exists with status queued`
       );
-      expect(response3.body.state).toBe("queued");
+      expect(response3.body.release.release_status).toBe("queued");
 
       vi.advanceTimersByTime(QUEUE_INTERVAL_MS);
       await awaitSpyResult(executeReleaseMock, 0);
@@ -628,7 +628,7 @@ describe("API Routes", () => {
       expect(response.body.message).toBe(
         `Release queued for commit ${randomCommitSha}`
       );
-      expect(response.body.state).toBe("queued");
+      expect(response.body.release.release_status).toBe("queued");
 
       vi.advanceTimersByTime(QUEUE_INTERVAL_MS);
       await awaitSpyResult(executeReleaseMock, 0);
@@ -657,7 +657,7 @@ describe("API Routes", () => {
         expect(response.body.message).toBe(
           `Release queued for commit ${randomCommitSha}`
         );
-        expect(response.body.state).toBe("queued");
+        expect(response.body.release.release_status).toBe("queued");
 
         // trigger release execution
         vi.advanceTimersByTime(QUEUE_INTERVAL_MS);

@@ -68,15 +68,17 @@ export function isAnyReleaseRunning(db: Database.Database): boolean {
   }
 }
 
-export function addToQueue(db: Database.Database, commitSha: string): void {
+export function addToQueue(db: Database.Database, commitSha: string): ReleaseLogItem {
   try {
     const stmt = db.prepare(`
         INSERT
             OR IGNORE
         INTO release_log (git_commit_url, git_commit_sha, release_status)
         VALUES (?, ?, ?)
+        RETURNING *
     `);
-    stmt.run(`https://github.com/commit/${commitSha}`, commitSha, "queued");
+    const result = stmt.get(`https://github.com/commit/${commitSha}`, commitSha, "queued") as ReleaseLogItem;
+    return result;
   } catch (error) {
     console.error(`Failed to add ${commitSha} to queue:`, error);
     throw error;

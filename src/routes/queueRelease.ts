@@ -31,11 +31,11 @@ export function queueRelease(
       });
     }
 
-    addToQueue(db, commitSha);
+    const release = addToQueue(db, commitSha);
 
     res.status(200).json({
       message: `Release queued for commit ${commitSha}`,
-      state: "queued",
+      release,
     });
   } catch (error) {
     console.error("Error triggering release:", error);
