@@ -170,33 +170,24 @@ Queue a new release for a specific commit SHA.
 }
 ```
 
-**Response (200 - Release started immediately):**
+**Response (200 - Release queued successfully):**
 ```json
 {
   "message": "Release triggered for commit abc1234",
-  "state": "running"
+  "release": { "id": 1, "git_commit_url": "...", "git_commit_sha": "...", "release_status": "queued", "queued_at": "2025-07-16T11:43:33.898Z", "started_at": null, "ended_at": null }
 }
 ```
 
-**Response (202 - Release queued):**
+**Response (202 — Release queued/running/success/failed/timeout):**
 ```json
 {
-  "message": "Release for commit abc1234 has been queued",
-  "state": "queued"
-}
-```
-
-**Response (409 - Release already running):**
-```json
-{
-  "error": "Release for commit abc1234 is already running",
-  "state": "running"
+  "message": "Release for commit abc1234 exists with status failed",
+  "release": { "id": 1, "git_commit_url": "...", "git_commit_sha": "...", "release_status": "failed", "queued_at": "2025-07-16T11:43:33.898Z", "started_at": "2025-07-16T11:46:48.374Z", "ended_at": "2025-07-16T11:48:05.374Z" }
 }
 ```
 
 **Error Codes:**
 - `400` - Missing commitSha or invalid commit SHA format
-- `409` - Release already running
 - `500` - Internal server error
 
 ---
